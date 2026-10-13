@@ -1,5 +1,6 @@
 """OS-backed locks release on process exit; no stale lock-file deletion."""
 
+import importlib
 import os
 import time
 from contextlib import contextmanager
@@ -25,14 +26,12 @@ def project_lock(root: Path, timeout: float = 20):
         while True:
             try:
                 if os.name == "nt":
-                    import importlib
-
                     msvcrt = importlib.import_module("msvcrt")
 
                     stream.seek(0)
                     msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
                 else:
-                    import fcntl
+                    fcntl = importlib.import_module("fcntl")
 
                     fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 break
@@ -44,13 +43,11 @@ def project_lock(root: Path, timeout: float = 20):
             yield
         finally:
             if os.name == "nt":
-                import importlib
-
                 msvcrt = importlib.import_module("msvcrt")
 
                 stream.seek(0)
                 msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
             else:
-                import fcntl
+                fcntl = importlib.import_module("fcntl")
 
                 fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
