@@ -22,12 +22,16 @@ else:
     env.pop("NATIVESTORE_ROOT", None)
 with tempfile.TemporaryDirectory(prefix="nativestore-desktop-") as temporary:
     env["NATIVESTORE_DATA_DIR"] = temporary
+    diagnostics = Path(temporary) / "native-startup.log"
+    env["NATIVESTORE_DIAGNOSTICS"] = str(diagnostics)
     process = subprocess.Popen(command, env=env)
     try:
         result = process.wait(timeout=120)
         if result:
             raise SystemExit(f"Native desktop smoke test failed with status {result}")
     finally:
+        if diagnostics.exists():
+            print(diagnostics.read_text(encoding="utf-8"), file=sys.stderr, flush=True)
         if process.poll() is None:
             process.kill()
             process.wait(timeout=10)

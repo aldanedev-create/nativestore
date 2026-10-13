@@ -131,7 +131,20 @@ fn check_backend(startup_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
     Ok(())
 }
-fn main() {
+fn diagnostic(message: &str) {
+    eprintln!("{message}");
+    if let Ok(path) = std::env::var("NATIVESTORE_DIAGNOSTICS") {
+        use std::io::Write;
+        if let Ok(mut file) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+        {
+            let _ = writeln!(file, "{message}");
+        }
+    }
+}
+fn run() -> Result<(), Box<dyn std::error::Error>> {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -180,14 +193,13 @@ fn main() {
                     let result = page_received.recv_timeout(Duration::from_secs(30))
                         .map_err(|_| "Native page did not finish loading".to_owned())
                         .and_then(|_| check_backend(&smoke_url).map_err(|error| error.to_string()));
-                    if let Err(error) = &result { eprintln!("NativeStore smoke test failed: {error}"); }
+                    if let Err(error) = &result { diagnostic(&format!("NativeStore smoke test failed: {error}")); }
                     handle.exit(if result.is_ok() { 0 } else { 1 });
                 });
             }
             Ok(())
         })
-        .build(tauri::generate_context!())
-        .expect("NativeStore failed to initialize");
+        .build(tauri::generate_context!())?;
     app.run(|handle, event| {
         if let tauri::RunEvent::Exit = event {
             if let Some(backend) = handle.try_state::<Backend>() {
@@ -198,4 +210,11 @@ fn main() {
             }
         }
     });
+    Ok(())
+}
+fn main() {
+    if let Err(error) = run() {
+        diagnostic(&format!("NativeStore failed to initialize: {error}"));
+        std::process::exit(1);
+    }
 }
