@@ -1,0 +1,8 @@
+[app]
+name = "expense-desk"
+title = "Expense Desk"
+entry = "main.py"
+width = 1100
+height = 750
+identifier = "dev.nativestore.expensedesk"
+version = "0.1.0"

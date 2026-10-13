@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "nativestore"
+version = "0.1.0"
+description = "Rust-powered Python desktop meta-framework built on Tauri and JinjaX"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["jinjax>=0.60,<1", "packaging>=23"]
+[project.optional-dependencies]
+flask = ["flask>=3.1,<4"]
+fastapi = ["fastapi>=0.115,<1"]
+dev = ["pytest>=8", "ruff>=0.9", "mypy>=1.14", "build>=1"]
+packaging = ["pyinstaller>=6.11,<7"]
+[project.scripts]
+nativestore = "nativestore.cli:main"
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["nativestore.scaffold*", "nativestore.desktop*", "nativestore.licenses*", "nativestore.native*"]
+[tool.setuptools.package-data]
+nativestore = ["py.typed", "registry.json", "bridge.js", "scaffold/*.py", "scaffold/*.toml", "scaffold/*.md", "scaffold/app/*.py", "scaffold/pages/*.py", "scaffold/api/*.py", "scaffold/tests/*.py", "scaffold/templates/*.html", "scaffold/templates/pages/*.html", "scaffold/static/css/*.css", "scaffold/static/js/*.js", "desktop/Cargo.toml", "desktop/Cargo.lock", "desktop/build.rs", "desktop/tauri.conf.json", "desktop/src/*.rs", "desktop/capabilities/*.json", "desktop/frontend/*", "desktop/icons/*.png", "desktop/icons/*.ico", "licenses/*.txt", "native/*"]
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+[tool.mypy]
+python_version = "3.11"
+files = ["src/nativestore"]
+check_untyped_defs = true
+ignore_missing_imports = true

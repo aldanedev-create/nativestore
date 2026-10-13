@@ -1,0 +1,19 @@
+include LICENSE README.md CHANGELOG.md SECURITY.md
+recursive-include docs *.md
+recursive-include src/nativestore/scaffold *.py *.html *.css *.js *.toml *.md
+include src/nativestore/registry.json src/nativestore/bridge.js src/nativestore/py.typed
+recursive-include src/nativestore/desktop *.toml *.lock *.json *.rs *.html
+prune src/nativestore/desktop/target
+
+recursive-include src/nativestore/desktop/icons *.png *.ico
+recursive-include src/nativestore/licenses *.txt
+include THIRD_PARTY_NOTICES.md
+include Cargo.toml Cargo.lock rust-toolchain.toml
+recursive-include crates *.rs *.toml
+recursive-include tests *.py
+
+include VALIDATION.md CONTRIBUTING.md
+recursive-include scripts *.py
+
+include setup.py
+recursive-exclude src/nativestore/native *

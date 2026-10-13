@@ -1,0 +1,10 @@
+[workspace]
+members = ["crates/nativestore-protocol", "crates/nativestore-router", "crates/nativestore-cli", "crates/nativestore-config", "crates/nativestore-assets", "crates/nativestore-dev", "crates/nativestore-builder", "crates/nativestore-test-support"]
+resolver = "2"
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

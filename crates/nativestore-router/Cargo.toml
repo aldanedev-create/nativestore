@@ -1,0 +1,12 @@
+[package]
+name = "nativestore-router"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+nativestore-protocol = { path = "../nativestore-protocol" }
+
+[dev-dependencies]
+nativestore-test-support = { path = "../nativestore-test-support" }

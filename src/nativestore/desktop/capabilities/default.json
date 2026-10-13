@@ -1,0 +1,1 @@
+{"identifier":"default","description":"No frontend access to native IPC; Python bridge uses authenticated loopback transport.","windows":["main"],"permissions":[]}

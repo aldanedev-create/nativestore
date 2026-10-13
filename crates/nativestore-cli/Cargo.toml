@@ -1,0 +1,13 @@
+[package]
+name = "nativestore-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+[dependencies]
+serde_json.workspace = true
+nativestore-router = { path = "../nativestore-router" }
+
+nativestore-config = { path = "../nativestore-config" }
+nativestore-assets = { path = "../nativestore-assets" }
+nativestore-dev = { path = "../nativestore-dev" }
+nativestore-builder = { path = "../nativestore-builder" }

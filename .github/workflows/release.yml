@@ -1,0 +1,90 @@
+name: Verified Python release
+on:
+  workflow_dispatch:
+    inputs:
+      clean_windows_verified:
+        description: 'Confirm this revision passed installation, UI, shutdown and uninstall checks in a clean Windows VM'
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  portable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@1.92.0
+        with:
+          components: rustfmt, clippy
+      - run: python -m pip install -e ".[dev,packaging,flask,fastapi]" twine pip-audit
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked
+      - run: cargo build -p nativestore-cli --locked
+      - run: python -m ruff check src tests scripts setup.py
+      - run: python -m mypy src/nativestore --exclude scaffold
+      - run: python -m pytest -q
+      - run: python -m pip_audit
+      - run: python -m nativestore new frozen-check
+      - run: python scripts/smoke_frozen_backend.py frozen-check
+      - run: python -m build
+      - run: python scripts/verify_distribution.py
+      - run: python -m twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-portable
+          path: dist/*
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@1.92.0
+      - run: python -m pip install -e ".[dev,packaging,flask,fastapi]" twine
+      - run: python -m pytest -q
+      - run: cargo build -p nativestore-cli --release --locked
+      - run: cargo build --manifest-path src/nativestore/desktop/Cargo.toml --release --locked
+      - run: python -m nativestore new release-check
+      - run: python scripts/smoke_desktop.py src/nativestore/desktop/target/release/nativestore-desktop.exe --project release-check
+      - run: cargo install tauri-cli --version "^2" --locked
+      - run: python -m nativestore build
+        working-directory: release-check
+      - shell: pwsh
+        run: |
+          $binary = Get-ChildItem release-check/.nativestore/builds/*/desktop/target/release/nativestore-desktop.exe | Select-Object -First 1
+          if (-not $binary) { throw 'No production application executable found' }
+          python scripts/smoke_desktop.py $binary.FullName
+          if ($LASTEXITCODE -ne 0) { throw 'Production native smoke test failed' }
+      - run: python scripts/stage_native.py --desktop src/nativestore/desktop/target/release/nativestore-desktop.exe --tools target/release/nativestore-cli.exe
+      - run: python -m build --wheel
+      - run: python scripts/verify_distribution.py
+      - run: python -m twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-windows
+          path: dist/*.whl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: release-check/.nativestore/builds/**/desktop/target/release/bundle/nsis/*.exe
+  publish:
+    if: inputs.clean_windows_verified
+    needs: [portable, windows]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: python-*
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1

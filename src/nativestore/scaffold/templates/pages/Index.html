@@ -1,0 +1,15 @@
+{#def title #}
+<Layout title={{ title }}>
+<header><div><p class="eyebrow">PERSONAL FINANCE</p><h1>A little clarity.<br>A lot more control.</h1>
+<p class="muted">Keep track of the everyday things that add up.</p></div><span class="badge">Python + NativeStore</span></header>
+<section class="summary"><div><p>Total recorded</p><strong id="total">$0.00</strong><span>Across all your expenses</span></div>
+<div><p>Transactions</p><strong id="count">0</strong><span>Stored securely on your device</span></div></section>
+<section class="panel"><div class="panel-heading"><h2>Add an expense</h2><span>No cloud account needed</span></div>
+<form id="expense-form"><label>Description<input name="description" placeholder="Lunch, supplies, transport…" required maxlength="200"></label>
+<label>Amount ($)<input name="amount" type="number" min="0.01" max="10000000" step="0.01" placeholder="0.00" required></label>
+<label>Category<select name="category"><option>Food</option><option>Transport</option><option>Supplies</option><option>Other</option></select></label>
+<button type="submit">Add expense</button></form><p id="message" role="status" aria-live="polite"></p></section>
+<section class="panel"><div class="panel-heading"><h2>Recent expenses</h2><span>Latest first</span></div>
+<div class="table-wrap"><table><thead><tr><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead><tbody id="expenses"></tbody></table></div>
+<p id="empty" class="empty">Your first expense is a fresh start. Add it above.</p></section>
+</Layout>
