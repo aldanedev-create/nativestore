@@ -28,3 +28,17 @@ Normal version naming is 0.1.0. Native implementation source is not represented 
 validation. The locally built wheel is portable; development without a precompiled runtime
 still needs Rust/native prerequisites or explicit browser debugging. Consult RELEASE_PLAN.md
 and docs/compatibility.md for remaining platform and feature acceptance work.
+
+## GitHub Actions — 2026-10-13
+
+Source is published at https://github.com/aldanedev-create/nativestore.
+The Python 3.11–3.13 Windows/Linux matrix, Rust checks and dependency audit
+passed after fixing the Windows lock-module typing and isolating the audit runtime.
+Jinja2 now requires at least 3.1.6. The desktop audit retains the two warnings above.
+
+[Native Windows run](https://github.com/aldanedev-create/nativestore/actions/runs/38461813533)
+compiled Tauri, loaded an actual native window, rendered the starter, exercised its Python
+command, and shut down successfully. The Windows wheel passed distribution and Twine
+checks and was uploaded as an artifact. An earlier launch failed without diagnostics;
+the diagnostic rerun passed. Native feature permissions and clean Windows installation
+are not covered by this basic smoke test. Installer checks are still running.

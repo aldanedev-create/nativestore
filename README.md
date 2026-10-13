@@ -85,7 +85,8 @@ network access for uncached Rust dependencies, Tauri tooling and WebView2.
 Applications importing other Python packages must install them in the build environment.
 
 Production build support is currently Windows x64 only. Verified native runtime resolution and optional Flask/ASGI adapters are implemented.
-Native Windows wheels and installer workflows are provided but not executed here.
+GitHub Actions has compiled the Windows runtime, passed a real native window/backend smoke test, and built a verified Windows wheel. Installer and clean-machine validation remain release gates.
+See [Actions](https://github.com/aldanedev-create/nativestore/actions) for current results.
 Signing, application auto-update and further installer platforms remain future work. End users should eventually need neither Python nor Rust; that
 promise still requires clean Windows installation testing.
 
@@ -109,7 +110,7 @@ The Tauri shell remains the native window and capability engine.
 Optional HTTP integrations use `app.mount_wsgi(flask_app, prefix="/legacy")` and
 `app.mount_asgi(fastapi_app, prefix="/backend")`. Install the corresponding extras.
 Native dialogs, clipboard, notifications and window controls are opt-in Tauri APIs;
-see [native features](docs/native.md). Native execution is still pending platform validation.
+see [native features](docs/native.md). The basic Windows window/backend smoke test has passed; native feature groups still require acceptance testing.
 
 Documentation: [quickstart](docs/quickstart.md), [CLI](docs/cli.md),
 [configuration](docs/configuration.md), [routing](docs/routing.md),

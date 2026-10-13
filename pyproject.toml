@@ -9,6 +9,10 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 dependencies = ["jinjax>=0.60,<1", "jinja2>=3.1.6,<4", "packaging>=23"]
+[project.urls]
+Repository = "https://github.com/aldanedev-create/nativestore"
+Issues = "https://github.com/aldanedev-create/nativestore/issues"
+Documentation = "https://github.com/aldanedev-create/nativestore/tree/main/docs"
 [project.optional-dependencies]
 flask = ["flask>=3.1,<4"]
 fastapi = ["fastapi>=0.115,<1"]
