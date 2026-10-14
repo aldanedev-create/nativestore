@@ -1,0 +1,6 @@
+{#def form #}
+<Layout title="Settings"><h1>Settings</h1><form method="POST" action="/preferences">
+<ns:Field name="display_name" label="Display name" value={{ form.values.get('display_name', '') }} error={{ form.errors.get('display_name', '') }} required={{ True }} />
+<button type="submit">Save settings</button></form>
+<button type="button" id="choose-folder">Choose folder with Tauri</button><p id="folder" role="status"></p>
+<script defer src="/static/js/settings.js"></script><a href="/">Home</a></Layout>

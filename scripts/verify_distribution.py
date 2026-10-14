@@ -20,6 +20,10 @@ for file in files:
             assert not any("/target/" in n or "__pycache__" in n for n in names)
             for relative in (
                 "bridge.js",
+                "ui.js",
+                "ui.css",
+                "components/Assets.html",
+                "angular-package-lock.json",
                 "desktop/src/main.rs",
                 "desktop/icons/icon.ico",
                 "scaffold/main.py",

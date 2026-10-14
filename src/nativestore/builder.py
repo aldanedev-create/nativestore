@@ -47,6 +47,7 @@ def stage(root: Path, destination: Path) -> Path:
         "api",
         "templates",
         "static",
+        "blueprints",
         *config.extra_resources,
     ):
         source = safe_path(root, name)
@@ -97,7 +98,7 @@ def stage(root: Path, destination: Path) -> Path:
 
 def hidden_imports(root: Path) -> list[str]:
     imports = set(Config.load(root).hidden_imports)
-    for directory in (root / "app", root / "pages", root / "api"):
+    for directory in (root / "app", root / "pages", root / "api", root / "blueprints"):
         if not directory.exists():
             continue
         for file in directory.rglob("*.py"):
@@ -105,7 +106,7 @@ def hidden_imports(root: Path) -> list[str]:
             if all(part.isidentifier() for part in relative.parts):
                 imports.add(".".join(relative.parts))
     files = [root / Config.load(root).entry]
-    for folder in ("app", "pages", "api"):
+    for folder in ("app", "pages", "api", "blueprints"):
         files.extend((root / folder).rglob("*.py"))
     for file in files:
         tree = ast.parse(file.read_text(), filename=str(file))
@@ -129,6 +130,9 @@ def build(root: Path) -> Path:
         raise BuildError("Install the Tauri CLI: cargo install tauri-cli --version ^2 --locked")
     if importlib.util.find_spec("PyInstaller") is None:
         raise BuildError("Install nativestore[packaging] in the application environment")
+    from .frontend import compile_frontend
+
+    compile_frontend(root)
     # Use a new build directory each time; never delete a user directory.
     import tempfile
 
@@ -150,6 +154,8 @@ def build(root: Path) -> Path:
                 "--noconfirm",
                 "--clean",
                 "--onefile",
+                "--exclude-module",
+                "debugpy",
                 "--name",
                 "nativestore-backend-x86_64-pc-windows-msvc",
                 "--distpath",
@@ -168,6 +174,7 @@ def build(root: Path) -> Path:
                 f"{Path(__file__).with_name('registry.json')};nativestore",
                 "--add-data",
                 f"{destination / 'project'};project",
+                *freeze_data_arguments(destination / "project"),
                 *[arg for module in hidden_imports(root) for arg in ("--hidden-import", module)],
                 str(entry),
             ],
@@ -182,3 +189,20 @@ def build(root: Path) -> Path:
     if not bundles:
         raise BuildError("Tauri returned success but produced no NSIS installer")
     return bundles[0]
+
+
+def freeze_data_arguments(project: Path) -> list[str]:
+    package = Path(__file__).parent
+    separator = ";" if sys.platform == "win32" else ":"
+    resources = [(package / name, "nativestore") for name in ("ui.js", "ui.css")]
+    resources.extend(
+        [
+            (package / "components", "nativestore/components"),
+            (package / "licenses", "nativestore/licenses"),
+        ]
+    )
+    return [
+        arg
+        for source, destination in resources
+        for arg in ("--add-data", f"{source}{separator}{destination}")
+    ]

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "packages": [
+    {
+      "name": "alpine",
+      "version": "3.14.8",
+      "url": "https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.14.8/dist/cdn.min.js",
+      "path": "alpine.js",
+      "sha256": "c98f46291087f0f93c9cdefb682d120fe1d2b3dcb649de83cfc1ad5b1fac58e4",
+      "license": "MIT",
+      "license_url": "https://github.com/alpinejs/alpine/blob/v3.14.8/LICENSE.md"
+    },
+    {
+      "name": "htmx",
+      "version": "2.0.4",
+      "url": "https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js",
+      "path": "htmx.js",
+      "sha256": "e209dda5c8235479f3166defc7750e1dbcd5a5c1808b7792fc2e6733768fb447",
+      "license": "0BSD",
+      "license_url": "https://github.com/bigskysoftware/htmx/blob/v2.0.4/LICENSE"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{#def first="Overview", second="Details", id="tabs" #}
+<div x-data="nsTabs"><div role="tablist" @keydown.arrow-right="next" @keydown.arrow-left="next" @keydown.home="first" @keydown.end="second">
+<button type="button" role="tab" id="{{ id + '-first' }}" aria-controls="{{ id + '-panel-first' }}" :aria-selected="firstSelected" :tabindex="firstIndex" @click="first">{{ first }}</button>
+<button type="button" role="tab" id="{{ id + '-second' }}" aria-controls="{{ id + '-panel-second' }}" :aria-selected="secondSelected" :tabindex="secondIndex" @click="second">{{ second }}</button></div>
+<div role="tabpanel" id="{{ id + '-panel-first' }}" aria-labelledby="{{ id + '-first' }}" x-show="firstSelected">{{ content }}</div>
+<div role="tabpanel" id="{{ id + '-panel-second' }}" aria-labelledby="{{ id + '-second' }}" x-cloak x-show="secondSelected"><p>{{ second }}</p></div></div>

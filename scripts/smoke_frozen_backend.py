@@ -13,12 +13,15 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import nativestore
-from nativestore.builder import hidden_imports, stage
+from nativestore.builder import freeze_data_arguments, hidden_imports, stage
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("project", type=Path)
+    parser.add_argument("--command", default="add_expense")
+    parser.add_argument("--args", default='{"description":"Frozen test","amount_cents":1234}')
+    parser.add_argument("--path", default="/")
     args = parser.parse_args()
     root = args.project.resolve()
     with tempfile.TemporaryDirectory(prefix="nativestore-frozen-") as temporary:
@@ -34,6 +37,8 @@ def main():
             "--noconfirm",
             "--clean",
             "--onefile",
+            "--exclude-module",
+            "debugpy",
             "--name",
             "backend",
             "--distpath",
@@ -56,6 +61,7 @@ def main():
             command.extend(["--add-data", f"{source}{separator}{destination}"])
         for module in hidden_imports(root):
             command.extend(["--hidden-import", module])
+        command.extend(freeze_data_arguments(out / "project"))
         command.append(str(entry))
         subprocess.run(command, check=True)
         executable = out / "dist" / ("backend.exe" if os.name == "nt" else "backend")
@@ -92,9 +98,9 @@ def main():
             response.read()
             connection.close()
             connection = http.client.HTTPConnection(url.hostname, url.port, timeout=10)
-            connection.request("GET", "/", headers={"Cookie": cookie})
+            connection.request("GET", args.path, headers={"Cookie": cookie})
             response = connection.getresponse()
-            assert response.status == 200 and b"Expense Desk" in response.read()
+            assert response.status == 200 and b"<!doctype html>" in response.read()
             connection.close()
             connection = http.client.HTTPConnection(url.hostname, url.port, timeout=10)
             connection.request(
@@ -103,8 +109,8 @@ def main():
                 json.dumps(
                     {
                         "protocol": 1,
-                        "command": "add_expense",
-                        "args": {"description": "Frozen test", "amount_cents": 1234},
+                        "command": args.command,
+                        "args": json.loads(args.args),
                     }
                 ),
                 {

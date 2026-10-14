@@ -1,0 +1,3 @@
+{#def form, message="" #}
+{% if message %}<ns:Alert message={{ message }} />{% endif %}
+{% if form.errors %}<p role="status">{{ form.errors.get('name', '') }}</p>{% endif %}

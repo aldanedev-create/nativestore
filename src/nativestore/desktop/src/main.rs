@@ -69,7 +69,9 @@ fn launch() -> Result<(Backend, Ready), Box<dyn std::error::Error>> {
         let _ = send.send(read.map(|_| line));
         let _ = std::io::copy(&mut reader, &mut std::io::sink());
     });
-    let line = receive.recv_timeout(Duration::from_secs(30))??;
+    let waiting = std::env::var("NATIVESTORE_DEBUG_WAIT").as_deref() == Ok("1")
+        && (cfg!(debug_assertions) || std::env::args().any(|arg| arg == "--development"));
+    let line = receive.recv_timeout(Duration::from_secs(if waiting { 86400 } else { 30 }))??;
     if line.len() > 8192 {
         return Err("Startup message too large".into());
     }
@@ -177,7 +179,10 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                 app.add_capability(capability.to_string().as_str())?;
             }
             app.manage(backend);
-            WebviewWindowBuilder::new(app, "main", WebviewUrl::External(url))
+            let development = cfg!(debug_assertions) || std::env::args().any(|arg| arg == "--development");
+            let inspect = development && std::env::var("NATIVESTORE_DEVTOOLS").as_deref() == Ok("1");
+            let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(url))
+                .devtools(development)
                 .title(ready.title)
                 .inner_size(ready.width as f64, ready.height as f64)
                 .on_navigation(move |next| next.origin() == origin)
@@ -187,6 +192,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 })
                 .build()?;
+            if inspect { window.open_devtools(); }
             if smoke {
                 let handle = app.app_handle().clone();
                 std::thread::spawn(move || {

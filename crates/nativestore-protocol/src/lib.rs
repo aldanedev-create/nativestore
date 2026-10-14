@@ -12,13 +12,15 @@ impl Invoke {
         if self.protocol != VERSION {
             return Err("Unsupported protocol");
         }
-        let mut chars = self.command.chars();
-        if !chars
-            .next()
-            .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
-            || !chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
-        {
-            return Err("Invalid command");
+        for segment in self.command.split('.') {
+            let mut chars = segment.chars();
+            if !chars
+                .next()
+                .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+                || !chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+            {
+                return Err("Invalid command");
+            }
         }
         Ok(())
     }
@@ -32,6 +34,25 @@ mod tests {
             r#"{"protocol":1,"command":"x","args":{},"eval":"x"}"#
         )
         .is_err());
+    }
+    #[test]
+    fn namespaces_are_validated() {
+        for name in ["inventory.add_item", "inventory.tools.list"] {
+            let value = Invoke {
+                protocol: 1,
+                command: name.into(),
+                args: Default::default(),
+            };
+            assert!(value.validate().is_ok());
+        }
+        for name in ["inventory..item", ".item", "inventory.", "inventory.eval()"] {
+            let value = Invoke {
+                protocol: 1,
+                command: name.into(),
+                args: Default::default(),
+            };
+            assert!(value.validate().is_err());
+        }
     }
     #[test]
     fn protocol_rejected() {

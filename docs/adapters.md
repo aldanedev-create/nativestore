@@ -41,3 +41,7 @@ application authorization checks.
 Use App as a context manager or call app.close() in headless tests to release workers and
 adapter lifespan resources. One project per backend process is the supported deployment
 model; embedded multi-project import namespace isolation is not advertised.
+
+ASGI lifespan state is shallow-copied into each request scope; request paths include
+the mounted prefix with root_path set accordingly. Adapter prefixes cannot overlap
+NativeStore routes or other adapters.

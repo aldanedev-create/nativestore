@@ -46,7 +46,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.92.0
       - run: python -m pip install -e ".[dev,packaging]"
       - run: cargo install tauri-cli --version "^2" --locked
-      - run: python -m nativestore new expense-desk
+      - run: python -m nativestore new expense-desk --ui expense
       - run: python -m nativestore test
         working-directory: expense-desk
       - run: python -m nativestore build

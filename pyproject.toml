@@ -17,6 +17,7 @@ Documentation = "https://github.com/aldanedev-create/nativestore/tree/main/docs"
 flask = ["flask>=3.1,<4"]
 fastapi = ["fastapi>=0.115,<1"]
 dev = ["pytest>=8", "ruff>=0.9", "mypy>=1.14", "build>=1"]
+debug = ["debugpy>=1.8,<2"]
 packaging = ["pyinstaller>=6.11,<7"]
 [project.scripts]
 nativestore = "nativestore.cli:main"
@@ -24,7 +25,7 @@ nativestore = "nativestore.cli:main"
 where = ["src"]
 exclude = ["nativestore.scaffold*", "nativestore.desktop*", "nativestore.licenses*", "nativestore.native*"]
 [tool.setuptools.package-data]
-nativestore = ["py.typed", "registry.json", "bridge.js", "scaffold/*.py", "scaffold/*.toml", "scaffold/*.md", "scaffold/app/*.py", "scaffold/pages/*.py", "scaffold/api/*.py", "scaffold/tests/*.py", "scaffold/templates/*.html", "scaffold/templates/pages/*.html", "scaffold/static/css/*.css", "scaffold/static/js/*.js", "desktop/Cargo.toml", "desktop/Cargo.lock", "desktop/build.rs", "desktop/tauri.conf.json", "desktop/src/*.rs", "desktop/capabilities/*.json", "desktop/frontend/*", "desktop/icons/*.png", "desktop/icons/*.ico", "licenses/*.txt", "native/*"]
+nativestore = ["py.typed", "registry.json", "bridge.js", "ui.js", "ui.css", "dev.js", "components/*.html", "angular-package-lock.json", "scaffold/*.py", "scaffold/*.toml", "scaffold/*.md", "scaffold/app/*.py", "scaffold/pages/*.py", "scaffold/api/*.py", "scaffold/tests/*.py", "scaffold/templates/*.html", "scaffold/templates/pages/*.html", "scaffold/static/css/*.css", "scaffold/static/js/*.js", "desktop/Cargo.toml", "desktop/Cargo.lock", "desktop/build.rs", "desktop/tauri.conf.json", "desktop/src/*.rs", "desktop/capabilities/*.json", "desktop/frontend/*", "desktop/icons/*.png", "desktop/icons/*.ico", "licenses/*.txt", "native/*"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
@@ -38,3 +39,9 @@ python_version = "3.11"
 files = ["src/nativestore"]
 check_untyped_defs = true
 ignore_missing_imports = true
+
+[tool.ruff.lint.per-file-ignores]
+# These modules embed complete HTML/TypeScript templates.
+"src/nativestore/starters.py" = ["E501"]
+"src/nativestore/generators.py" = ["E501"]
+"src/nativestore/devtools.py" = ["E501"]

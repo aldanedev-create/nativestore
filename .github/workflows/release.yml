@@ -29,7 +29,7 @@ jobs:
       - run: python -m mypy src/nativestore --exclude scaffold
       - run: python -m pytest -q
       - run: python -m pip_audit
-      - run: python -m nativestore new frozen-check
+      - run: python -m nativestore new frozen-check --ui expense
       - run: python scripts/smoke_frozen_backend.py frozen-check
       - run: python -m build
       - run: python scripts/verify_distribution.py
@@ -51,7 +51,7 @@ jobs:
       - run: python -m pytest -q
       - run: cargo build -p nativestore-cli --release --locked
       - run: cargo build --manifest-path src/nativestore/desktop/Cargo.toml --release --locked
-      - run: python -m nativestore new release-check
+      - run: python -m nativestore new release-check --ui expense
       - run: python scripts/smoke_desktop.py src/nativestore/desktop/target/release/nativestore-desktop.exe --project release-check
       - run: cargo install tauri-cli --version "^2" --locked
       - run: python -m nativestore build

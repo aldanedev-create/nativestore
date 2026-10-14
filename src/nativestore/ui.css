@@ -1,0 +1,10 @@
+[x-cloak] { display: none !important; }
+.htmx-indicator { visibility: hidden; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { visibility: visible; }
+.ns-field { margin-block: 1rem; }
+.ns-field label { display: block; }
+.ns-field [aria-invalid="true"] { border: 2px solid #a01919; }
+.ns-field [role="status"] { color: #a01919; }
+dialog { max-width: min(36rem, 90vw); border-radius: .5rem; }
+dialog::backdrop { background: rgb(0 0 0 / .4); }
+[role="tab"][aria-selected="true"] { font-weight: bold; }

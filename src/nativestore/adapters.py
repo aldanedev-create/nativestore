@@ -95,6 +95,7 @@ class ASGIAdapter:
         self.thread.start()
         self.closed = False
         self.started = False
+        self.state: dict[str, Any] = {}
         self.incoming: Any = None
         self.outgoing: Any = None
         self.lifespan = None
@@ -109,7 +110,11 @@ class ASGIAdapter:
         self.outgoing = asyncio.Queue()
         self.lifespan = asyncio.create_task(
             self.application(
-                {"type": "lifespan", "asgi": {"version": "3.0", "spec_version": "2.0"}},
+                {
+                    "type": "lifespan",
+                    "asgi": {"version": "3.0", "spec_version": "2.0"},
+                    "state": self.state,
+                },
                 self.incoming.get,
                 self.outgoing.put,
             )
@@ -160,8 +165,9 @@ class ASGIAdapter:
             "http_version": "1.1",
             "method": ctx.method,
             "scheme": "http",
-            "path": path,
-            "raw_path": path.encode(),
+            "path": prefix + path,
+            "raw_path": (prefix + path).encode(),
+            "state": self.state.copy(),
             "root_path": prefix,
             "query_string": urlencode(ctx.query, doseq=True).encode(),
             "headers": [

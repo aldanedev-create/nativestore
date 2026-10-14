@@ -89,3 +89,12 @@ def discover(root: Path) -> list[Route]:
 
 def manifest(root: Path) -> dict:
     return {"protocol": 1, "routes": [asdict(r) for r in discover(root)]}
+
+
+def within_prefix(pattern: str, prefix: str) -> bool:
+    if not prefix:
+        return True
+    expected, base = segments(pattern), segments(prefix)
+    return len(expected) >= len(base) and all(
+        a == b or a.startswith("{") for a, b in zip(expected, base, strict=False)
+    )

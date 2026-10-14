@@ -1,0 +1,4 @@
+{#def nativestore_nonce #}
+<Layout title="Welcome to NativeStore"><h1>Welcome to NativeStore</h1><p>Python business logic, JinjaX components, and a Tauri desktop window.</p><ns:Dropdown label="Greeting form"><form method="POST" action="/greet" hx-post="/greet" hx-target="#greeting">
+<ns:Field name="name" label="Your name" required={{ True }} />
+<button type="submit">Say hello</button></form><div id="greeting" aria-live="polite"></div></ns:Dropdown><p><a href="/settings">Settings</a></p></Layout>

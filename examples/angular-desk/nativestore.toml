@@ -1,0 +1,8 @@
+[app]
+name = "angular-desk"
+title = "Angular Desk"
+entry = "main.py"
+width = 1100
+height = 750
+identifier = "dev.nativestore.angular-desk"
+version = "0.1.0"

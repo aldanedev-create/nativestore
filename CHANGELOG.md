@@ -1,5 +1,15 @@
 # Changelog
 
+## Developer workflow update — 2026-10-14
+
+Added the approved default JinjaX + Angular 22 starter, optional minimal/HTMX/Alpine
+starters, managed assets and reusable UI components, Python form validation, safe
+page/component/blueprint generators, explicit blueprint mounting, and development
+reload/error/request/command diagnostics with optional debugpy and native inspector.
+ASGI lifespan state and mounted paths are preserved. Local blueprint and compiled
+Angular resources are included in frozen builds; debugpy is excluded. Added examples
+and real browser/frozen-app CI. Tauri remains the native runtime.
+
 ## 0.1.0 — release preparation, 2026-10-13
 
 Continues the existing NativeStore implementation. Added OS-backed project asset locks

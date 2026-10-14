@@ -1,0 +1,3 @@
+{#def label="Actions" #}
+<div x-data="nsDisclosure" @keydown.escape="close"><button type="button" @click="toggle" :aria-expanded="expanded">{{ label }}</button>
+<div x-cloak x-show="open" @click.outside="close">{{ content }}</div></div>

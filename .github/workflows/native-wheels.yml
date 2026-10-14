@@ -22,7 +22,7 @@ jobs:
       - run: python -m pip install -e ".[dev,packaging,flask,fastapi]" twine
       - run: cargo build -p nativestore-cli --release --locked
       - run: cargo build --manifest-path src/nativestore/desktop/Cargo.toml --release --locked
-      - run: python -m nativestore new runtime-check
+      - run: python -m nativestore new runtime-check --ui expense
       - run: python scripts/smoke_desktop.py src/nativestore/desktop/target/release/nativestore-desktop.exe --project runtime-check
       - run: python scripts/stage_native.py --desktop src/nativestore/desktop/target/release/nativestore-desktop.exe --tools target/release/nativestore-cli.exe
       - run: python -m build --wheel

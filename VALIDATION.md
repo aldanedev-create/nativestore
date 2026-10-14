@@ -42,3 +42,20 @@ command, and shut down successfully. The Windows wheel passed distribution and T
 checks and was uploaded as an artifact. An earlier launch failed without diagnostics;
 the diagnostic rerun passed. Native feature permissions and clean Windows installation
 are not covered by this basic smoke test. Installer checks are still running.
+
+## Developer workflow update — 2026-10-14
+
+- Approved default: JinjaX + modern Angular 22.2.2, Node.js 24 for builds.
+- 99 Python tests passed; 17 Rust tests passed; Ruff/Mypy and Clippy passed.
+- Angular AOT compilation passed with the committed npm lock.
+- Real Chromium interactions passed for Angular Python bridge calls and HTMX/Alpine
+  validation/icon updates under the existing CSP.
+- Real PyInstaller executables passed without Python on PATH for minimal, Angular,
+  and local inventory blueprint apps. Wheel/sdist resource inspection and Twine passed.
+- Development panel authentication, production exclusion, redaction, template reload,
+  asset add/remove idempotence, blueprint collisions/lifecycle/imports, form escaping
+  and ASGI state isolation are covered by tests.
+- Native inspector and revised Windows installer require a new Windows Actions run.
+  Prior Windows native wheel/installer checks succeeded; that does not validate this
+  revised native source. Clean VM install/upgrade/uninstall and native capability
+  operations remain release gates. No PyPI publication was performed.

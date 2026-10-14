@@ -17,3 +17,7 @@ recursive-include scripts *.py
 
 include setup.py
 recursive-exclude src/nativestore/native *
+
+include DEVELOPMENT_PLAN.md
+include src/nativestore/ui.js src/nativestore/ui.css src/nativestore/dev.js src/nativestore/angular-package-lock.json
+recursive-include src/nativestore/components *.html

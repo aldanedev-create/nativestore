@@ -11,14 +11,21 @@ and tested. Native desktop source and Windows packaging orchestration are includ
 Windows installer creation and clean-machine launch must be verified on Windows
 before a production release. Do not treat this source archive as a finished installer.
 
-## Install from this source
+## Install and create an app
 
 ```bash
 python -m pip install -e ".[dev,packaging]"
-python -m nativestore new expense-desk
-cd expense-desk
-python -m nativestore dev --browser
+python -m nativestore new my-desk
+cd my-desk/frontend
+npm ci --ignore-scripts
+cd ..
+python -m nativestore dev --devtools
 ```
+
+The default is **JinjaX + modern Angular**, compiled with Node.js 24. End users need
+no Node.js. For a lightweight app with no Node build, use `new my-desk --ui minimal`
+or `--ui htmx-alpine`; `--ui expense` retains the original expense example.
+See [developer workflow](docs/developer-workflow.md) and [blueprints](docs/blueprints.md).
 
 The distribution has not been published to PyPI by this task. `python -m nativestore`
 works even when your Python scripts directory is not on PATH. If it is on PATH,
@@ -37,7 +44,7 @@ nativestore add lucide
 nativestore routes
 ```
 
-The starter is a real local expense app: JinjaX component layout, Python commands,
+The explicit `--ui expense` starter is a real local expense app: JinjaX component layout, Python commands,
 SQLite persistence, add/delete forms, JSON API and a second page. Its default UI
 uses local vanilla JavaScript; installing an optional library does not silently
 rewrite templates. Add its script tag when using that library.

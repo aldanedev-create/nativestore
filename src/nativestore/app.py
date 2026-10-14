@@ -15,7 +15,7 @@ from typing import Any, Union, get_args, get_origin, get_type_hints
 from .config import Config, current_project
 from .errors import BridgeError, RouteError
 from .execution import Execution, ExecutionBusy, ExecutionTimeout
-from .router import match, overlap, segments
+from .router import match, overlap, segments, within_prefix
 from .templates import Templates
 
 log = logging.getLogger("nativestore")
@@ -27,6 +27,7 @@ class Response:
     status: int = 200
     content_type: str = "text/html; charset=utf-8"
     headers: list[tuple[str, str]] = field(default_factory=list)
+    csp_nonce: str | None = None
 
 
 @dataclass
@@ -39,8 +40,22 @@ class Context:
     raw_body: bytes = b""
     headers: dict[str, str] = field(default_factory=dict)
 
-    def render(self, name: str, **data: Any) -> Response:
-        return Response(self.app.templates.render(name, **data))
+    def render(self, template: str, *, status: int = 200, **data: Any) -> Response:
+        import secrets
+
+        nonce = secrets.token_urlsafe(24)
+        return Response(
+            self.app.templates.render(template, nativestore_nonce=nonce, **data),
+            status,
+            csp_nonce=nonce,
+        )
+
+    def validate(self, form):
+        return form.validate(self.body)
+
+    @property
+    def is_htmx(self) -> bool:
+        return any(k.lower() == "hx-request" and v == "true" for k, v in self.headers.items())
 
     def json(self, data: Any, status: int = 200) -> Response:
         return Response(json.dumps(data, allow_nan=False), status, "application/json")
@@ -105,6 +120,12 @@ class App:
         self._templates: Templates | None = None
         self.execution = Execution()
         self.adapters: list[tuple[str, Any]] = []
+        self.blueprints: dict[str, Any] = {}
+        self._shutdown: list[Callable] = []
+        self._closed = False
+        from .devtools import Diagnostics
+
+        self.diagnostics = Diagnostics()
         if sys.platform == "win32":
             base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData/Local"))
         elif sys.platform == "darwin":
@@ -128,6 +149,8 @@ class App:
             raise RouteError("Unsupported method")
 
         def register(handler: Callable) -> Callable:
+            if any(within_prefix(path, prefix) for prefix, _ in self.adapters):
+                raise RouteError("Route overlaps a framework adapter")
             for route, verb, _ in self.routes:
                 if verb == method and overlap(route, path):
                     raise RouteError(f"Ambiguous {method} routes: {route} and {path}")
@@ -139,7 +162,9 @@ class App:
     def command(self, name: str | None = None) -> Callable:
         def register(handler: Callable) -> Callable:
             command_name = name or handler.__name__
-            if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", command_name):
+            if not re.fullmatch(
+                r"[A-Za-z_][A-Za-z_0-9]*(?:\.[A-Za-z_][A-Za-z_0-9]*)*", command_name
+            ):
                 raise BridgeError("Invalid command name")
             if command_name in self.commands:
                 raise BridgeError(f"Duplicate command: {command_name}")
@@ -161,6 +186,23 @@ class App:
         return register
 
     def invoke(self, message: Any) -> dict:
+        import time
+
+        from .devtools import enabled
+
+        started = time.monotonic()
+        status = "failed"
+        try:
+            result = self._invoke_dispatch(message)
+            status = "ok" if result.get("ok") else "failed"
+            return result
+        finally:
+            if enabled():
+                name = message.get("command", "") if isinstance(message, dict) else ""
+                name = name if isinstance(name, str) and name in self.commands else "unregistered"
+                self.diagnostics.record("command", name, status, time.monotonic() - started)
+
+    def _invoke_dispatch(self, message: Any) -> dict:
         if threading.current_thread() is self.execution.worker:
             return self._invoke(message)
         try:
@@ -200,7 +242,11 @@ class App:
                 }
 
             return {"protocol": 1, "ok": True, "result": result}
-        except Exception:
+        except Exception as error:
+            from .devtools import enabled
+
+            if enabled():
+                self.diagnostics.exception(error)
             log.exception("Command failed: %s", message["command"])
             return {
                 "protocol": 1,
@@ -251,6 +297,11 @@ class App:
                 return adapter.handle(context, path[len(prefix) :] or "/", prefix)
         return Response("Not found", 404, "text/plain")
 
+    def mount_blueprint(self, blueprint, *, prefix: str, config: dict | None = None) -> None:
+        from .blueprints import mount
+
+        mount(self, blueprint, prefix, config or {})
+
     def mount_wsgi(self, application: Any, *, prefix: str = "/legacy") -> None:
         from .adapters import WSGIAdapter
 
@@ -265,6 +316,16 @@ class App:
         prefix = prefix.rstrip("/")
         try:
             segments(prefix or "/")
+            if any(within_prefix(route, prefix) for route, _, _ in self.routes):
+                raise RouteError("Adapter prefix overlaps an application route")
+            if any(
+                not prefix
+                or not previous
+                or prefix.startswith(previous + "/")
+                or previous.startswith(prefix + "/")
+                for previous, _ in self.adapters
+            ):
+                raise RouteError("Adapter prefixes must not overlap")
             if "{" in prefix or any(p == prefix for p, _ in self.adapters):
                 raise RouteError("Adapter prefixes must be unique static paths")
         except Exception:
@@ -279,6 +340,14 @@ class App:
         self.close()
 
     def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        for callback in reversed(self._shutdown):
+            try:
+                self.execution.run(callback, self.config.command_timeout)
+            except Exception:
+                log.exception("Blueprint shutdown failed")
         self.execution.close()
         for _, adapter in self.adapters:
             adapter.close()

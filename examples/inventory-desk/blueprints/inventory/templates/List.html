@@ -1,0 +1,7 @@
+{#def items, form, blueprint_prefix #}
+<form method="POST" action="{{ blueprint_prefix + '/api/add' }}" hx-post="{{ blueprint_prefix + '/api/add' }}" hx-target="#inventory">
+<ns:Field name="name" label="Item name" value={{ form.values.get('name', '') }} error={{ form.errors.get('name', '') }} required={{ True }} />
+<ns:Field name="quantity" label="Quantity" type="number" value={{ form.values.get('quantity', '') }} error={{ form.errors.get('quantity', '') }} required={{ True }} />
+<button type="submit">Add item</button></form>
+<ul>{% for item in items %}<li>{{ item.name }} — {{ item.quantity }}
+<form method="POST" action="{{ blueprint_prefix + '/api/delete/' + item.id|string }}" hx-post="{{ blueprint_prefix + '/api/delete/' + item.id|string }}" hx-target="#inventory"><button type="submit">Delete {{ item.name }}</button></form></li>{% endfor %}</ul>

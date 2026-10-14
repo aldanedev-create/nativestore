@@ -13,3 +13,8 @@ target/
 *.sqlite3
 
 src/nativestore/native/
+
+node_modules/
+
+.angular/
+examples/*/static/angular/

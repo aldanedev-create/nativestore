@@ -1,0 +1,3 @@
+{#def label="Open dialog" #}
+<div x-data="nsDialog"><button type="button" @click="show">{{ label }}</button>
+<dialog x-ref="dialog" @close="restore" @click="backdrop"><button type="button" @click="close">Close</button>{{ content }}</dialog></div>

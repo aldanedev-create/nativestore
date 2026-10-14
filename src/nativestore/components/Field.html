@@ -1,0 +1,4 @@
+{#def name, label, value="", error="", type="text", required=False #}
+<div class="ns-field"><label for="{{ name }}">{{ label }}</label>
+<input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}" {% if required %}required{% endif %} aria-invalid="{{ 'true' if error else 'false' }}" aria-describedby="{{ name }}-error">
+<p id="{{ name }}-error" role="status">{{ error }}</p></div>

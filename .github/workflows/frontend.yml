@@ -1,0 +1,37 @@
+name: Frontend workflows
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        ui: [angular, htmx-alpine]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: python -m pip install -e '.[dev,packaging]' playwright
+      - run: python -m playwright install --with-deps chromium
+      - run: python -m nativestore new frontend-check --ui ${{ matrix.ui }}
+      - if: matrix.ui == 'angular'
+        run: npm ci --ignore-scripts
+        working-directory: frontend-check/frontend
+      - if: matrix.ui == 'angular'
+        run: npm run build
+        working-directory: frontend-check/frontend
+      - run: python -m nativestore test
+        working-directory: frontend-check
+      - run: python scripts/smoke_frontend.py frontend-check --ui ${{ matrix.ui }}
+      - if: matrix.ui == 'angular'
+        run: python scripts/smoke_frozen_backend.py frontend-check --command greet_person --args '{"name":"Ada"}'
+      - if: matrix.ui == 'htmx-alpine'
+        run: python -m pytest examples/inventory-desk/blueprints/inventory/tests examples/settings-desk/tests -q
+      - if: matrix.ui == 'htmx-alpine'
+        run: python scripts/smoke_frozen_backend.py examples/inventory-desk --path /inventory --command greet_person --args '{"name":"Ada"}'

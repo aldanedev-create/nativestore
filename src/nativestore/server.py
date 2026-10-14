@@ -5,6 +5,7 @@ import mimetypes
 import re
 import secrets
 import threading
+import time
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -101,10 +102,16 @@ class Handler(BaseHTTPRequestHandler):
             raise ValueError("Too many response headers")
         if any(c in response.content_type for c in "\r\n\x00"):
             raise ValueError("Invalid response content type")
+        self._response_status = response.status
         self.send_response(response.status)
         self.send_header("Content-Type", response.content_type)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Content-Security-Policy", CSP)
+        policy = CSP
+        if response.csp_nonce:
+            policy = policy.replace(
+                "style-src 'self'", "style-src 'self' 'nonce-" + response.csp_nonce + "'"
+            )
+        self.send_header("Content-Security-Policy", policy)
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Cache-Control", "no-store")
@@ -128,16 +135,43 @@ class Handler(BaseHTTPRequestHandler):
         )
 
     def do_GET(self) -> None:
-        self.handle_request()
+        self.tracked_request()
 
     def do_POST(self) -> None:
-        self.handle_request()
+        self.tracked_request()
 
     def do_PUT(self) -> None:
-        self.handle_request()
+        self.tracked_request()
 
     def do_DELETE(self) -> None:
-        self.handle_request()
+        self.tracked_request()
+
+    def tracked_request(self) -> None:
+        from .devtools import enabled
+        from .router import match
+
+        started = time.monotonic()
+        self._response_status = 500
+        try:
+            self.handle_request()
+        finally:
+            if enabled():
+                path = urlsplit(self.path).path
+                if not path.startswith("/__nativestore/dev"):
+                    name = next(
+                        (
+                            pattern
+                            for pattern, verb, _ in self.server.app.routes
+                            if verb == self.command and match(pattern, path) is not None
+                        ),
+                        "/static/*" if path.startswith("/static/") else "/internal-or-unmatched",
+                    )
+                    self.server.app.diagnostics.record(
+                        "request",
+                        self.command + " " + name,
+                        self._response_status,
+                        time.monotonic() - started,
+                    )
 
     def handle_request(self) -> None:
         self.connection.settimeout(5)
@@ -217,6 +251,57 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(
                     Response(json.dumps(result, allow_nan=False), content_type="application/json")
                 )
+            from .devtools import PANEL, enabled, revision
+
+            if enabled() and self.command == "GET":
+                if path == "/__nativestore/dev":
+                    return self.send(Response(PANEL))
+                if path == "/__nativestore/dev/data":
+                    return self.send(
+                        Response(
+                            json.dumps(self.server.app.diagnostics.snapshot(self.server.app)),
+                            content_type="application/json",
+                        )
+                    )
+                if path == "/__nativestore/dev/revision":
+                    return self.send(
+                        Response(
+                            json.dumps(revision(self.server.app.root)),
+                            content_type="application/json",
+                        )
+                    )
+                if path == "/__nativestore/dev.js":
+                    return self.send(
+                        Response(
+                            Path(__file__).with_name("dev.js").read_bytes(),
+                            content_type="text/javascript",
+                        )
+                    )
+            if path in ("/__nativestore/ui.js", "/__nativestore/ui.css") and self.command == "GET":
+                name = path.rsplit("/", 1)[-1]
+                return self.send(
+                    Response(
+                        Path(__file__).with_name(name).read_bytes(),
+                        content_type="text/css" if name.endswith(".css") else "text/javascript",
+                    )
+                )
+            if path.startswith("/static/blueprints/") and self.command == "GET":
+                name, _, relative = path[len("/static/blueprints/") :].partition("/")
+                blueprint = self.server.app.blueprints.get(name)
+                if blueprint is None:
+                    return self.error(404, "not_found")
+                file = safe_path(Path(blueprint.root) / "static", relative)
+                if not file.is_file():
+                    return self.error(404, "not_found")
+                if file.stat().st_size > 20 * MAX_BODY:
+                    return self.error(413, "asset_too_large")
+                return self.send(
+                    Response(
+                        file.read_bytes(),
+                        content_type=mimetypes.guess_type(file.name)[0]
+                        or "application/octet-stream",
+                    )
+                )
             if path == "/__nativestore/bridge.js" and self.command == "GET":
                 return self.send(
                     Response(
@@ -253,6 +338,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(response)
         except (BridgeError, ConfigurationError, UnicodeError):
             return self.error(400, "invalid_request")
-        except Exception:
+        except Exception as error:
+            from .devtools import enabled, error_page
+
+            if enabled():
+                return self.send(Response(error_page(error, self.server.app.diagnostics), 500))
             logging.getLogger("nativestore").exception("Request failed")
             return self.error(500, "request_failed")

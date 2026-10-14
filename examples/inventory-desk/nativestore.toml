@@ -1,0 +1,8 @@
+[app]
+name = "inventory-desk"
+title = "Inventory Desk"
+entry = "main.py"
+width = 1100
+height = 750
+identifier = "dev.nativestore.inventory-desk"
+version = "0.1.0"

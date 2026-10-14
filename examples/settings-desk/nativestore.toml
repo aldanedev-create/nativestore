@@ -1,0 +1,10 @@
+[app]
+name = "settings-desk"
+title = "Settings Desk"
+entry = "main.py"
+width = 1100
+height = 750
+identifier = "dev.nativestore.settings-desk"
+version = "0.1.0"
+
+native_features = ["dialog"]
